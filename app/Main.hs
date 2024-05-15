@@ -6,5 +6,7 @@ import WriteUUID (writeUuidsToFile)
 main :: IO ()
 main = do
   uuidsVar <- newTVarUUID
-  generateUUID 1_000_000 uuidsVar
-  writeUuidsToFile uuidsVar "uuid-file"
+  generateUUID
+    10_000
+    uuidsVar
+    (writeUuidsToFile uuidsVar "uuid-file")

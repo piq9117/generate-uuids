@@ -70,16 +70,16 @@ library
     , base
     , bytestring
     , conduit
+    , optparse-applicative
     , relude
     , stm
     , text
     , uuid
-    , optparse-applicative
 
   exposed-modules:
+    CLI
     Generate
     WriteUUID
-    CLI
 
 executable generate-uuids
   -- Import common warning flags.

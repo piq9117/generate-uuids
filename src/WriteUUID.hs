@@ -4,6 +4,7 @@ import Conduit
   ( MonadUnliftIO,
     allNewBuffersStrategy,
     builderToByteStringWith,
+    filterC,
     runConduitRes,
     sinkFileBS,
     transPipe,
@@ -23,5 +24,8 @@ writeUuidsToFile uuidsVar path = do
   let minPartSize = 10 * 1024 * 1024
   runConduitRes $
     yield uuids
-      .| transPipe liftIO (builderToByteStringWith $ allNewBuffersStrategy minPartSize)
+      .| transPipe
+        liftIO
+        (builderToByteStringWith $ allNewBuffersStrategy minPartSize)
+      .| filterC (\b -> b /= mempty)
       .| sinkFileBS path

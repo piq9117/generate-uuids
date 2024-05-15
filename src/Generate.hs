@@ -6,7 +6,7 @@ module Generate
   )
 where
 
-import Control.Concurrent.Async (withAsync)
+import Control.Concurrent.Async (Concurrently (..), runConcurrently)
 import Control.Concurrent.STM.TVar (modifyTVar)
 import Data.ByteString.Builder (Builder)
 import Data.Text.Encoding (encodeUtf8Builder)
@@ -16,11 +16,12 @@ import Data.UUID.V4 (nextRandom)
 newTVarUUID :: IO (TVar Builder)
 newTVarUUID = newTVarIO mempty
 
-generateUUID :: Int -> TVar Builder -> IO ()
-generateUUID length uuidsVar = replicateM_ length (insertUUID uuidsVar)
+generateUUID :: Int -> TVar Builder -> IO () -> IO ()
+generateUUID length uuidsVar action =
+  replicateM_ length (insertUUID uuidsVar action)
 
-insertUUID :: TVar Builder -> IO ()
-insertUUID uuidsVar = do
+insertUUID :: TVar Builder -> IO () -> IO ()
+insertUUID uuidsVar action = do
   uuid <- liftIO nextRandom
 
   let appendUuids =
@@ -30,4 +31,8 @@ insertUUID uuidsVar = do
                 <> uuids
           )
 
-  withAsync appendUuids $ \_ -> pure ()
+  void $
+    runConcurrently $
+      (,)
+        <$> Concurrently appendUuids
+        <*> Concurrently action
