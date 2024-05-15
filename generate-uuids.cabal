@@ -74,10 +74,12 @@ library
     , stm
     , text
     , uuid
+    , optparse-applicative
 
   exposed-modules:
     Generate
     WriteUUID
+    CLI
 
 executable generate-uuids
   -- Import common warning flags.
