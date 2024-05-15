@@ -8,7 +8,7 @@
       forAllSystems = nixpkgs.lib.genAttrs nixpkgs.lib.systems.flakeExposed;
       nixpkgsFor = forAllSystems (system: import nixpkgs {
         inherit system;
-        overlays = [self.overlay];
+        overlays = [ self.overlay ];
       });
     in
     {
