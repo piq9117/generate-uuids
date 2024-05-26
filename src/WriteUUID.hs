@@ -4,28 +4,31 @@ import Conduit
   ( MonadUnliftIO,
     allNewBuffersStrategy,
     builderToByteStringWith,
-    filterC,
     runConduitRes,
-    sinkFileBS,
+    sinkIOHandle,
     transPipe,
-    yield,
+    yieldM,
     (.|),
   )
+import Control.Concurrent (myThreadId)
+import Control.Exception (bracket)
 import Data.ByteString.Builder (Builder)
+import Foreign.StablePtr (freeStablePtr, newStablePtr)
+import System.IO (openFile)
 
 writeUuidsToFile ::
   (MonadIO m, MonadUnliftIO m) =>
-  TVar Builder ->
+  TMVar Builder ->
   FilePath ->
   m ()
 writeUuidsToFile uuidsVar path = do
-  uuids <- readTVarIO uuidsVar
-  -- 10mb buffer size
-  let minPartSize = 10 * 1024 * 1024
-  runConduitRes $
-    yield uuids
-      .| transPipe
-        liftIO
-        (builderToByteStringWith $ allNewBuffersStrategy minPartSize)
-      .| filterC (\b -> b /= mempty)
-      .| sinkFileBS path
+  -- 1mb buffer size
+  let minPartSize = 1 * 1024 * 1024
+  threadId <- liftIO myThreadId
+  liftIO $ bracket (newStablePtr threadId) (freeStablePtr) $ \_ ->
+    runConduitRes $
+      (yieldM (atomically (takeTMVar uuidsVar)))
+        .| transPipe
+          liftIO
+          (builderToByteStringWith $ allNewBuffersStrategy minPartSize)
+        .| sinkIOHandle (openFile path AppendMode)

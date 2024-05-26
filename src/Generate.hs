@@ -1,38 +1,35 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Generate
-  ( newTVarUUID,
+  ( newTMVarUUID,
     generateUUID,
   )
 where
 
 import Control.Concurrent.Async (Concurrently (..), runConcurrently)
-import Control.Concurrent.STM.TVar (modifyTVar)
 import Data.ByteString.Builder (Builder)
 import Data.Text.Encoding (encodeUtf8Builder)
 import Data.UUID qualified as UUID
 import Data.UUID.V4 (nextRandom)
 
-newTVarUUID :: IO (TVar Builder)
-newTVarUUID = newTVarIO mempty
+newTMVarUUID :: IO (TMVar Builder)
+newTMVarUUID = newEmptyTMVarIO
 
-generateUUID :: Int -> TVar Builder -> IO () -> IO ()
-generateUUID length uuidsVar action =
-  replicateM_ length (insertUUID uuidsVar action)
+generateUUID :: Int -> TMVar Builder -> IO () -> IO ()
+generateUUID length uuidVar action = do
+  replicateM_ length (insertUUID uuidVar action)
 
-insertUUID :: TVar Builder -> IO () -> IO ()
+insertUUID :: TMVar Builder -> IO () -> IO ()
 insertUUID uuidsVar action = do
   uuid <- liftIO nextRandom
 
-  let appendUuids =
+  let putUuid =
         atomically
-          ( modifyTVar uuidsVar $ \uuids ->
-              (encodeUtf8Builder $ UUID.toText uuid <> "\n")
-                <> uuids
+          ( putTMVar uuidsVar (encodeUtf8Builder $ UUID.toText uuid <> "\n")
           )
 
   void $
     runConcurrently $
       (,)
-        <$> Concurrently appendUuids
+        <$> Concurrently putUuid
         <*> Concurrently action

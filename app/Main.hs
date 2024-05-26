@@ -3,13 +3,13 @@
 module Main where
 
 import CLI (CliInput (..), execParseCommand)
-import Generate (generateUUID, newTVarUUID)
+import Generate (generateUUID, newTMVarUUID)
 import WriteUUID (writeUuidsToFile)
 
 main :: IO ()
 main = do
   cliInput <- execParseCommand
-  uuidsVar <- newTVarUUID
+  uuidsVar <- newTMVarUUID
   generateUUID
     cliInput.count
     uuidsVar
