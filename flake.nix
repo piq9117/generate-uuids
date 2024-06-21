@@ -14,9 +14,7 @@
     {
       overlay = final: prev: {
         hsPkgs = prev.haskell.packages.ghc965.override {
-          overrides = hfinal: hprev: {
-            ghcid = prev.haskell.lib.dontCheck hprev.ghcid;
-          };
+          overrides = hfinal: hprev: {};
         };
         init-project = final.writeScriptBin "init-project" ''
           ${final.hsPkgs.cabal-install}/bin/cabal init --non-interactive
