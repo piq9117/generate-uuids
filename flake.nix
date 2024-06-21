@@ -40,6 +40,8 @@
           };
           libs = with pkgs; [
             zlib
+            ormolu
+            treefmt
           ];
         in
         {
@@ -49,8 +51,6 @@
               hsPkgs.cabal-install
               hsPkgs.cabal-fmt
               hsPkgs.ghc
-              ormolu
-              treefmt
               nixpkgs-fmt
               hsPkgs.cabal-fmt
               init-project
