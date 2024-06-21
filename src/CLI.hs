@@ -29,7 +29,9 @@ data Command
   = ParseCommand CliInput
 
 data CliInput = CliInput
-  { filepath :: FilePath,
+  { -- | filepath output of the uuids.
+    -- If this is null, it will output to stdout
+    filepath :: Maybe FilePath,
     count :: Int
   }
 
@@ -39,11 +41,13 @@ execParseCommand = execParser parseOpts
 parseCommand :: Parser CliInput
 parseCommand =
   CliInput
-    <$> strOption
-      ( long "filepath"
-          <> short 'f'
-          <> help "File path where uuids will be inserted"
-      )
+    <$> ( optional $
+            strOption
+              ( long "filepath"
+                  <> short 'f'
+                  <> help "File path where uuids will be inserted"
+              )
+        )
     <*> ( option
             auto
             ( long "count"

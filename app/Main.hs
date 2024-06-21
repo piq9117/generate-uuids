@@ -4,7 +4,7 @@ module Main where
 
 import CLI (CliInput (..), execParseCommand)
 import Generate (generateUUID, newTMVarUUID)
-import WriteUUID (writeUuidsToFile)
+import WriteUUID (uuidsToStdOut, writeUuidsToFile)
 
 main :: IO ()
 main = do
@@ -13,4 +13,7 @@ main = do
   generateUUID
     cliInput.count
     uuidsVar
-    (writeUuidsToFile uuidsVar cliInput.filepath)
+    ( case cliInput.filepath of
+        Nothing -> uuidsToStdOut uuidsVar
+        Just filepath -> writeUuidsToFile uuidsVar filepath
+    )

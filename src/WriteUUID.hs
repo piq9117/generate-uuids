@@ -1,7 +1,13 @@
-module WriteUUID (writeUuidsToFile) where
+module WriteUUID
+  ( writeUuidsToFile,
+    uuidsToStdOut,
+  )
+where
 
 import Conduit
-  ( MonadUnliftIO,
+  ( ConduitT,
+    MonadUnliftIO,
+    ResourceT,
     allNewBuffersStrategy,
     builderToByteStringWith,
     runConduitRes,
@@ -13,15 +19,17 @@ import Conduit
 import Control.Concurrent (myThreadId)
 import Control.Exception (bracket)
 import Data.ByteString.Builder (Builder)
+import Data.Conduit.Combinators (stdout)
 import Foreign.StablePtr (freeStablePtr, newStablePtr)
 import System.IO (openFile)
+import Prelude hiding (stdout)
 
-writeUuidsToFile ::
-  (MonadIO m, MonadUnliftIO m) =>
+runAction ::
+  (MonadIO m) =>
   TMVar Builder ->
-  FilePath ->
-  m ()
-writeUuidsToFile uuidsVar path = do
+  ConduitT ByteString Void (ResourceT IO) b ->
+  m b
+runAction uuidsVar action = do
   -- 1mb buffer size
   let minPartSize = 1 * 1024 * 1024
   threadId <- liftIO myThreadId
@@ -31,4 +39,18 @@ writeUuidsToFile uuidsVar path = do
         .| transPipe
           liftIO
           (builderToByteStringWith $ allNewBuffersStrategy minPartSize)
-        .| sinkIOHandle (openFile path AppendMode)
+        .| action
+
+writeUuidsToFile ::
+  (MonadIO m, MonadUnliftIO m) =>
+  TMVar Builder ->
+  FilePath ->
+  m ()
+writeUuidsToFile uuidsVar path = 
+  runAction uuidsVar (sinkIOHandle (openFile path AppendMode))
+
+uuidsToStdOut ::
+  (MonadIO m) =>
+  TMVar Builder ->
+  m ()
+uuidsToStdOut uuidsVar = runAction uuidsVar stdout

@@ -14,21 +14,22 @@
     {
       overlay = final: prev: {
         hsPkgs = prev.haskell.packages.ghc965.override {
-          overrides = hfinal: hprev: {};
+          overrides = hfinal: hprev: { };
         };
         init-project = final.writeScriptBin "init-project" ''
           ${final.hsPkgs.cabal-install}/bin/cabal init --non-interactive
         '';
       };
 
-      packages = forAllSystems(system: 
-        let 
+      packages = forAllSystems (system:
+        let
           pkgs = nixpkgsFor.${system};
           developPackage = pkgs.hsPkgs.developPackage {
             root = ./.;
           };
-        
-        in {
+
+        in
+        {
           default = developPackage;
         });
 
